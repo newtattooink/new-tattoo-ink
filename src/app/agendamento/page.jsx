@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation"; // <- CORRETO no App Router
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 
 export default function Agendamento() {
@@ -11,8 +11,7 @@ export default function Agendamento() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (!user) {
-        // Não está logado, redireciona para login
-        router.replace("/login?error=login-necessario");
+        router.replace("/login?error=login_required");
       }
     });
 
@@ -20,10 +19,11 @@ export default function Agendamento() {
   }, [auth, router]);
 
   return (
-    <div>
-      {/* Conteúdo da página de agendamento */}
-      <h1>Agendar Horário</h1>
-      {/* resto do formulário */}
+    <div className="min-h-screen flex items-center justify-center text-white">
+      <div>
+        <h1 className="text-3xl font-bold mb-4">Agendar Horário</h1>
+        {/* Adicione seu formulário aqui */}
+      </div>
     </div>
   );
 }
