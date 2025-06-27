@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link"; // coloque no topo do arquivo
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -26,7 +27,7 @@ export default function Home() {
           <h1 className="text-xl font-bold tracking-wide text-white">New Tattoo Ink</h1>
 
           <div className="flex items-center gap-6 text-sm font-medium">
-            <a href="/catalogo" className="hover:text-gray-300">Catálogo</a>
+            <Link href="/catalogo" className="hover:text-gray-300">Catálogo</Link>
 
             <button
               onClick={() => handleProtectedNavigation("/agendamento")}
