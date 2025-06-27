@@ -27,7 +27,7 @@ export default function Home() {
           <h1 className="text-xl font-bold tracking-wide text-white">New Tattoo Ink</h1>
 
           <div className="flex items-center gap-6 text-sm font-medium">
-            <Link href="/catalogo" className="hover:text-gray-300">Catálogo</Link>
+            <Link href="/catalogo" className="hover:text-gray-300">Catálogossssss</Link>
 
             <button
               onClick={() => handleProtectedNavigation("/agendamento")}
