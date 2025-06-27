@@ -1,8 +1,27 @@
-export default function AgendamentoPage() {
+import { useEffect } from "react";
+import { useRouter } from "next/router";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
+
+export default function Agendamento() {
+  const router = useRouter();
+  const auth = getAuth();
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        // Não está logado, redireciona para login
+        router.replace("/login?error=login-necessario");
+      }
+    });
+
+    return () => unsubscribe();
+  }, [auth, router]);
+
   return (
-    <main className="min-h-screen bg-black text-white p-8">
-      <h1 className="text-4xl font-bold mb-4">Agendamento</h1>
-      <p className="text-gray-400">Em breve: formulário de agendamento com Firebase.</p>
-    </main>
+    <div>
+      {/* Conteúdo da página de agendamento */}
+      <h1>Agendar Horário</h1>
+      {/* resto do formulário */}
+    </div>
   );
 }

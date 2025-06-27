@@ -1,14 +1,21 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  updateProfile,
+} from "firebase/auth";
+import { auth } from "@/lib/firebase"; // confirme o caminho
 
 function AuthPageContent() {
   const [isLogin, setIsLogin] = useState(true);
   const [loginError, setLoginError] = useState("");
   const [showModal, setShowModal] = useState(false);
-
+  const [loading, setLoading] = useState(false);
   const searchParams = useSearchParams();
+  const router = useRouter();
 
   useEffect(() => {
     const errorParam = searchParams.get("error");
@@ -27,23 +34,73 @@ function AuthPageContent() {
   async function handleLoginSubmit(e) {
     e.preventDefault();
     setLoginError("");
+    setLoading(true);
 
-    const email = e.target.email.value.trim();
-    const password = e.target.password.value.trim();
+    const form = e.currentTarget;
+    const email = form.email.value.trim();
+    const password = form.password.value.trim();
 
     try {
       if (!email || !password) {
         throw new Error("Preencha todos os campos.");
       }
 
-      if (email !== "usuario@exemplo.com" || password !== "123456") {
-        throw new Error("E-mail ou senha inválidos.");
+      await signInWithEmailAndPassword(auth, email, password);
+      alert("Login realizado com sucesso!");
+      router.push("/"); // ajuste o redirecionamento se quiser
+    } catch (err) {
+      if (
+        err.code === "auth/user-not-found" ||
+        err.code === "auth/wrong-password"
+      ) {
+        setLoginError("E-mail ou senha inválidos.");
+      } else if (err.message) {
+        setLoginError(err.message);
+      } else {
+        setLoginError("Erro inesperado. Tente novamente.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleCadastroSubmit(e) {
+    e.preventDefault();
+    setLoginError("");
+    setLoading(true);
+
+    const form = e.currentTarget;
+    const nome = form.nome?.value.trim() || "";
+    const email = form.email?.value.trim() || "";
+    const password = form.password?.value.trim() || "";
+
+    try {
+      if (!email || !password) {
+        throw new Error("Preencha todos os campos.");
       }
 
-      alert("Login realizado com sucesso!");
-      // Redirecionar para dashboard ou home, por exemplo
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+
+      if (auth.currentUser && nome) {
+        await updateProfile(auth.currentUser, { displayName: nome });
+      }
+
+      alert("Cadastro realizado com sucesso!");
+      router.push("/"); // ajuste o redirecionamento se quiser
     } catch (err) {
-      setLoginError(err.message);
+      if (err.code === "auth/email-already-in-use") {
+        setLoginError("Este e-mail já está em uso.");
+      } else if (err.message) {
+        setLoginError(err.message);
+      } else {
+        setLoginError("Erro ao cadastrar. Verifique os dados.");
+      }
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -64,21 +121,29 @@ function AuthPageContent() {
                 </h1>
                 <form className="space-y-6" onSubmit={handleLoginSubmit}>
                   <div>
-                    <label className="text-sm text-gray-400 mb-1 block">E-mail</label>
+                    <label className="text-sm text-gray-400 mb-1 block">
+                      E-mail
+                    </label>
                     <input
                       name="email"
                       type="email"
                       className="w-full px-4 py-2 bg-zinc-900 border border-gray-700 rounded-md text-white"
                       placeholder="seu@email.com"
+                      required
+                      autoComplete="username"
                     />
                   </div>
                   <div>
-                    <label className="text-sm text-gray-400 mb-1 block">Senha</label>
+                    <label className="text-sm text-gray-400 mb-1 block">
+                      Senha
+                    </label>
                     <input
                       name="password"
                       type="password"
                       className="w-full px-4 py-2 bg-zinc-900 border border-gray-700 rounded-md text-white"
                       placeholder="••••••••"
+                      required
+                      autoComplete="current-password"
                     />
                   </div>
 
@@ -88,9 +153,12 @@ function AuthPageContent() {
 
                   <button
                     type="submit"
-                    className="w-full bg-purple-600 hover:bg-purple-700 transition text-white font-semibold py-2 rounded-lg"
+                    disabled={loading}
+                    className={`w-full bg-purple-600 hover:bg-purple-700 transition text-white font-semibold py-2 rounded-lg ${
+                      loading ? "opacity-60 cursor-not-allowed" : ""
+                    }`}
                   >
-                    Entrar
+                    {loading ? "Processando..." : "Entrar"}
                   </button>
                 </form>
                 <p className="text-sm text-center text-gray-500 mt-6">
@@ -101,6 +169,7 @@ function AuthPageContent() {
                       setLoginError("");
                     }}
                     className="text-purple-400 hover:underline"
+                    type="button"
                   >
                     Cadastre-se
                   </button>
@@ -112,36 +181,56 @@ function AuthPageContent() {
                 <h1 className="text-3xl font-bold text-white text-center mb-6 tracking-widest">
                   Cadastro
                 </h1>
-                <form className="space-y-6">
+                <form className="space-y-6" onSubmit={handleCadastroSubmit}>
                   <div>
-                    <label className="text-sm text-gray-400 mb-1 block">Nome completo</label>
+                    <label className="text-sm text-gray-400 mb-1 block">
+                      Nome completo
+                    </label>
                     <input
+                      name="nome"
                       type="text"
                       className="w-full px-4 py-2 bg-zinc-900 border border-gray-700 rounded-md text-white"
                       placeholder="Seu nome"
+                      autoComplete="name"
                     />
                   </div>
                   <div>
-                    <label className="text-sm text-gray-400 mb-1 block">E-mail</label>
+                    <label className="text-sm text-gray-400 mb-1 block">
+                      E-mail
+                    </label>
                     <input
+                      name="email"
                       type="email"
                       className="w-full px-4 py-2 bg-zinc-900 border border-gray-700 rounded-md text-white"
                       placeholder="seu@email.com"
+                      required
+                      autoComplete="username"
                     />
                   </div>
                   <div>
-                    <label className="text-sm text-gray-400 mb-1 block">Senha</label>
+                    <label className="text-sm text-gray-400 mb-1 block">
+                      Senha
+                    </label>
                     <input
+                      name="password"
                       type="password"
                       className="w-full px-4 py-2 bg-zinc-900 border border-gray-700 rounded-md text-white"
                       placeholder="Crie uma senha"
+                      required
+                      autoComplete="new-password"
                     />
                   </div>
+                  {loginError && !showModal && (
+                    <p className="text-red-500 text-sm mt-2">{loginError}</p>
+                  )}
                   <button
                     type="submit"
-                    className="w-full bg-purple-600 hover:bg-purple-700 transition text-white font-semibold py-2 rounded-lg"
+                    disabled={loading}
+                    className={`w-full bg-purple-600 hover:bg-purple-700 transition text-white font-semibold py-2 rounded-lg ${
+                      loading ? "opacity-60 cursor-not-allowed" : ""
+                    }`}
                   >
-                    Cadastrar
+                    {loading ? "Processando..." : "Cadastrar"}
                   </button>
                 </form>
                 <p className="text-sm text-center text-gray-500 mt-6">
@@ -152,6 +241,7 @@ function AuthPageContent() {
                       setLoginError("");
                     }}
                     className="text-purple-400 hover:underline"
+                    type="button"
                   >
                     Fazer login
                   </button>
@@ -164,7 +254,10 @@ function AuthPageContent() {
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50" onClick={closeModal}>
+        <div
+          className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
+          onClick={closeModal}
+        >
           <div
             className="bg-gray-900 text-white rounded-lg p-6 max-w-sm mx-4"
             onClick={(e) => e.stopPropagation()}
