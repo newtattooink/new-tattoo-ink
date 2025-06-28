@@ -1,37 +1,38 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { onAuthStateChanged, User } from "firebase/auth";
-import { auth } from "@/lib/firebase"; // ✅ garanta que esse caminho está certo
+import { onAuthStateChanged, signOut } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 
-// Tipagem do contexto
-interface AuthContextProps {
-  user: User | null;
-  loading: boolean;
-}
-
-// Criação do contexto
-const AuthContext = createContext<AuthContextProps>({
+// Criação do contexto com todos os dados necessários
+const AuthContext = createContext({
   user: null,
   loading: true,
+  logout: () => {}, // função vazia como fallback
 });
 
 // Provider
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+export function AuthProvider({ children }) {
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      setUser(firebaseUser);
       setLoading(false);
     });
 
     return () => unsubscribe();
   }, []);
 
+  // Método para sair da conta
+  const logout = async () => {
+    await signOut(auth);
+    setUser(null);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading }}>
+    <AuthContext.Provider value={{ user, loading, logout }}>
       {children}
     </AuthContext.Provider>
   );

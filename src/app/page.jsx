@@ -1,14 +1,32 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { Menu, X } from "lucide-react";
+import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
 
 export default function Home() {
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [userName, setUserName] = useState("");
+
+  // ✅ Verifica se o usuário está logado
+  useEffect(() => {
+    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setIsAuthenticated(true);
+        setUserName(user.displayName || "Usuário");
+      } else {
+        setIsAuthenticated(false);
+        setUserName("");
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const handleProtectedNavigation = (path) => {
     if (isAuthenticated) {
@@ -18,6 +36,12 @@ export default function Home() {
     }
   };
 
+  const handleLogout = async () => {
+    const auth = getAuth();
+    await signOut(auth);
+    router.refresh(); // Recarrega para atualizar a interface
+  };
+
   return (
     <main className="min-h-screen bg-black text-white font-sans">
       {/* Header */}
@@ -25,12 +49,8 @@ export default function Home() {
         <div className="max-w-6xl mx-auto flex items-center justify-between px-4 py-3">
           <h1 className="text-xl font-bold tracking-wide text-white">New Tattoo Ink</h1>
 
-          {/* Botão de menu para mobile */}
-          <button
-            className="md:hidden"
-            onClick={() => setMenuOpen(!menuOpen)}
-            aria-label="Abrir menu"
-          >
+          {/* Botão de menu mobile */}
+          <button className="md:hidden" onClick={() => setMenuOpen(!menuOpen)} aria-label="Abrir menu">
             {menuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
 
@@ -43,15 +63,24 @@ export default function Home() {
             <button onClick={() => handleProtectedNavigation("/parceria")} className="hover:text-gray-300">
               Parcerias
             </button>
-            <a
-              href="/login"
-              className="flex items-center gap-2 text-white hover:text-gray-300 border border-gray-700 px-3 py-1.5 rounded-full"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5.121 17.804A10.001 10.001 0 0112 2a10.001 10.001 0 016.879 15.804M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-              Login
-            </a>
+            {isAuthenticated ? (
+              <button
+                onClick={handleLogout}
+                className="border border-gray-700 px-3 py-1.5 rounded-full hover:text-gray-300"
+              >
+                Sair ({userName})
+              </button>
+            ) : (
+              <Link
+                href="/login"
+                className="flex items-center gap-2 text-white hover:text-gray-300 border border-gray-700 px-3 py-1.5 rounded-full"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5.121 17.804A10.001 10.001 0 0112 2a10.001 10.001 0 016.879 15.804M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                Login
+              </Link>
+            )}
           </nav>
         </div>
 
@@ -65,9 +94,15 @@ export default function Home() {
             <button onClick={() => { handleProtectedNavigation("/parceria"); setMenuOpen(false); }} className="block py-2">
               Parcerias
             </button>
-            <a href="/login" className="block py-2 border-t border-gray-800 pt-2" onClick={() => setMenuOpen(false)}>
-              Login
-            </a>
+            {isAuthenticated ? (
+              <button onClick={() => { handleLogout(); setMenuOpen(false); }} className="block py-2 border-t border-gray-800 pt-2">
+                Sair ({userName})
+              </button>
+            ) : (
+              <Link href="/login" className="block py-2 border-t border-gray-800 pt-2" onClick={() => setMenuOpen(false)}>
+                Login
+              </Link>
+            )}
           </div>
         )}
       </header>

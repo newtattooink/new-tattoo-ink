@@ -7,7 +7,7 @@ import {
   createUserWithEmailAndPassword,
   updateProfile,
 } from "firebase/auth";
-import { auth } from "@/lib/firebase"; // confirme o caminho
+import { auth } from "@/lib/firebase"; // confirme o caminho correto
 
 function AuthPageContent() {
   const [isLogin, setIsLogin] = useState(true);
@@ -71,8 +71,8 @@ function AuthPageContent() {
 
     const form = e.currentTarget;
     const nome = form.nome?.value.trim() || "";
-    const email = form.email?.value.trim() || "";
-    const password = form.password?.value.trim() || "";
+    const email = form.email.value.trim();
+    const password = form.password.value.trim();
 
     try {
       if (!email || !password) {
