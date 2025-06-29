@@ -1,5 +1,20 @@
 "use client";
 
+export default function ParceriaPage() {
+  return (
+    <div className="min-h-screen bg-black flex items-center justify-center">
+      <img
+        src="/manutencao.jpg"
+        alt="Página em manutenção"
+        className="max-w-full h-auto"
+      />
+    </div>
+  );
+}
+
+/*
+"use client";
+
 import { useState } from "react";
 
 export default function ParceriaPage() {
@@ -93,9 +108,9 @@ export default function ParceriaPage() {
 
             {submitMessage && (
               <p
-                className={`text-center mt-2 ${
+                className={\`text-center mt-2 \${
                   submitMessage.includes("sucesso") ? "text-green-400" : "text-red-500"
-                }`}
+                }\`}
               >
                 {submitMessage}
               </p>
@@ -122,3 +137,4 @@ export default function ParceriaPage() {
     </main>
   );
 }
+*/
