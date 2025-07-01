@@ -6,16 +6,30 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   updateProfile,
+  onAuthStateChanged,
 } from "firebase/auth";
-import { auth } from "@/lib/firebase"; // confirme o caminho correto
+import { auth } from "@/lib/firebase"; // ajuste o caminho se necessário
 
 function AuthPageContent() {
   const [isLogin, setIsLogin] = useState(true);
   const [loginError, setLoginError] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [verificandoAuth, setVerificandoAuth] = useState(true);
   const searchParams = useSearchParams();
   const router = useRouter();
+
+  // Verifica se o usuário já está logado
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        router.push("/"); // redireciona para a home se estiver logado
+      } else {
+        setVerificandoAuth(false); // libera o formulário se não estiver logado
+      }
+    });
+    return () => unsubscribe();
+  }, [router]);
 
   useEffect(() => {
     const errorParam = searchParams.get("error");
@@ -47,7 +61,7 @@ function AuthPageContent() {
 
       await signInWithEmailAndPassword(auth, email, password);
       alert("Login realizado com sucesso!");
-      router.push("/"); // ajuste o redirecionamento se quiser
+      router.push("/");
     } catch (err) {
       if (
         err.code === "auth/user-not-found" ||
@@ -90,7 +104,7 @@ function AuthPageContent() {
       }
 
       alert("Cadastro realizado com sucesso!");
-      router.push("/"); // ajuste o redirecionamento se quiser
+      router.push("/");
     } catch (err) {
       if (err.code === "auth/email-already-in-use") {
         setLoginError("Este e-mail já está em uso.");
@@ -102,6 +116,14 @@ function AuthPageContent() {
     } finally {
       setLoading(false);
     }
+  }
+
+  if (verificandoAuth) {
+    return (
+      <main className="min-h-screen bg-black text-white flex items-center justify-center">
+        <p>Verificando autenticação...</p>
+      </main>
+    );
   }
 
   return (
@@ -252,7 +274,7 @@ function AuthPageContent() {
         </div>
       </main>
 
-      {/* Modal */}
+      {/* Modal de erro de login obrigatório */}
       {showModal && (
         <div
           className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
@@ -277,7 +299,7 @@ function AuthPageContent() {
   );
 }
 
-// Wrapping com Suspense para compatibilidade com useSearchParams
+// Wrapping com Suspense
 export default function AuthPageWrapper() {
   return (
     <Suspense fallback={<div className="text-white text-center p-10">Carregando...</div>}>

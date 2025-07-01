@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import { getAuth } from "firebase/auth";
+import { useState, useEffect } from "react";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { getStorage, ref, uploadBytes } from "firebase/storage";
+import BotaoVoltar from "@/components/BotaoVoltar";
 
 export default function AgendamentoPage() {
-  const auth = getAuth();
-  const user = auth.currentUser;
+  const [user, setUser] = useState(null);
+  const [nomeCliente, setNomeCliente] = useState("Nome não disponível");
 
   const [formData, setFormData] = useState({
     estilo: "",
@@ -17,27 +18,41 @@ export default function AgendamentoPage() {
     imagem: null,
   });
 
+  useEffect(() => {
+    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setNomeCliente(currentUser?.displayName || "Nome não disponível");
+    });
+
+    return () => unsubscribe();
+  }, []);
+
   const handleChange = (e) => {
     const { name, value, files } = e.target;
     if (name === "imagem") {
-      setFormData({ ...formData, imagem: files[0] });
+      setFormData((prev) => ({ ...prev, imagem: files[0] }));
     } else {
-      setFormData({ ...formData, [name]: value });
+      setFormData((prev) => ({ ...prev, [name]: value }));
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const storage = getStorage();
-    const imageRef = ref(storage, `agendamentos/${user?.uid}/${formData.imagem?.name}`);
+    if (!user) {
+      alert("Você precisa estar logado para agendar.");
+      return;
+    }
 
     try {
+      const storage = getStorage();
       if (formData.imagem) {
+        const imageRef = ref(storage, `agendamentos/${user.uid}/${formData.imagem.name}`);
         await uploadBytes(imageRef, formData.imagem);
-        alert("Agendamento enviado com sucesso!");
-        // Você pode adicionar aqui o envio para o Firestore depois
       }
+      alert("Agendamento enviado com sucesso!");
+      // Aqui você pode salvar os outros dados no Firestore, se desejar
     } catch (error) {
       console.error("Erro ao enviar:", error);
       alert("Erro ao enviar agendamento.");
@@ -45,7 +60,8 @@ export default function AgendamentoPage() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white p-8">
+    <div className="min-h-screen bg-black text-white p-8 relative">
+      <BotaoVoltar />
       <div className="max-w-2xl mx-auto">
         <h1 className="text-3xl font-bold mb-6">Agendar Horário</h1>
 
@@ -54,7 +70,7 @@ export default function AgendamentoPage() {
             <label className="block mb-1">Nome do Cliente</label>
             <input
               type="text"
-              value={user?.displayName || "Nome não disponível"}
+              value={nomeCliente}
               disabled
               className="w-full p-2 bg-gray-800 text-white rounded"
             />
