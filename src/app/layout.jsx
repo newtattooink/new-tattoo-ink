@@ -35,10 +35,10 @@ export default function RootLayout({ children }) {
           antialiased scroll-smooth
         `}
       >
-        {/* ✅ O AuthProvider deve englobar tudo que usa o contexto de autenticação */}
         <AuthProvider>
           <Header />
-          <main>{children}</main>
+          {/* Garante espaço abaixo do header fixo */}
+          <main className="pt-[64px]">{children}</main>
         </AuthProvider>
       </body>
     </html>
