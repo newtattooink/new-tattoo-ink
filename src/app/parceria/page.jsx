@@ -1,8 +1,20 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+
 export default function ParceriaPage() {
+  const router = useRouter();
+
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center">
+    <div className="min-h-screen bg-black relative flex items-center justify-center">
+      {/* Botão Voltar */}
+      <button
+        onClick={() => router.push("/")}
+        className="absolute top-4 right-4 bg-white text-black font-semibold px-4 py-2 rounded-full hover:bg-gray-200 transition z-50"
+      >
+        Voltar
+      </button>
+
       <img
         src="/manutencao.jpg"
         alt="Página em manutenção"
@@ -11,6 +23,7 @@ export default function ParceriaPage() {
     </div>
   );
 }
+
 
 /*
 "use client";
